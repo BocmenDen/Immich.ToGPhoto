@@ -15,16 +15,18 @@ namespace Immich.ToGPhoto.App
         private readonly GPMCClient _gpmcClient = null!;
         private readonly ImmichClient _immichClient = null!;
         private readonly SyncDB _syncDB = null!;
+        private readonly int _countChankUpload;
 
         private SyncUser() { }
 
-        public SyncUser(ImmichClient immichClient, GPMCClient gpmcClient, string name)
+        public SyncUser(ImmichClient immichClient, GPMCClient gpmcClient, string name, int countChankUpload = 20)
         {
             _gpmcClient = gpmcClient;
             _immichClient = immichClient;
             Key = $"{_gpmcClient.Key}_{immichClient.Key}";
             _syncDB = new SyncDB(Key);
             Name = name;
+            _countChankUpload = countChankUpload;
         }
 
         public async Task SyncNewPhotos(ILogger logger)
@@ -90,7 +92,7 @@ namespace Immich.ToGPhoto.App
         /// </summary>
         private async Task LoadPhotos(ILogger logger)
         {
-            var allAssetsImmich = _immichClient.SearchAllAssetsAsync(new MetadataSearchDto() { WithDeleted = false, WithStacked = true }).Select(x => x.Id);
+            var allAssetsImmich = _immichClient.SearchAllAssetsAsync(new MetadataSearchDto() { WithDeleted = false, WithStacked = true, Order = AssetOrder.Asc }).Select(x => x.Id);
 
             await foreach (var itemImmichChank in allAssetsImmich.Chunk(CHANK_SIZE))
             {
@@ -109,18 +111,23 @@ namespace Immich.ToGPhoto.App
                 // Элементы которые в конечном итоге загружаем
                 var toFillUpload = toNewUpload.Concat(toResetUpload.Select(x => x.ImmichKey));
 
-                var (pathFilesUpload, mapFilesKey) = await GetFilesToUpload(toFillUpload, logger);
+                foreach (var toFillUploadChank in toFillUpload.Chunk(_countChankUpload))
+                {
+                    var (pathFilesUpload, mapFilesKey) = await GetFilesToUpload(toFillUploadChank, logger);
 
-                logger.LogInformation("В Google Photo успешно загружено {count} элементов", mapFilesKey.Count);
+                    logger.LogInformation("Успешно скачанно для загрузки {count} элементов", mapFilesKey.Count);
 
-                var resultUpload = (await _gpmcClient.UploadFilesAsync(new UploadRequest() { Path = pathFilesUpload })).Files;
+                    var resultUpload = (await _gpmcClient.UploadFilesAsync(new UploadRequest() { Path = pathFilesUpload })).Files;
 
-                var addDBItems = resultUpload.Select(x => new SyncItemModel() { GoogleKey = x.Value, ImmichKey = mapFilesKey[new(x.Key)] });
+                    logger.LogInformation("В Google Photo успешно загружено {count} элементов", resultUpload.Count);
 
-                await _syncDB.SyncItems.AddRangeAsync(addDBItems);
-                await _syncDB.SaveChangesAsync();
+                    var addDBItems = resultUpload.Select(x => new SyncItemModel() { GoogleKey = x.Value, ImmichKey = mapFilesKey[new(x.Key)] });
 
-                Directory.Delete(pathFilesUpload, true);
+                    await _syncDB.SyncItems.AddRangeAsync(addDBItems);
+                    await _syncDB.SaveChangesAsync();
+
+                    Directory.Delete(pathFilesUpload, true);
+                }
             }
         }
 

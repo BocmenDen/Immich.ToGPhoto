@@ -6,6 +6,7 @@
         public required string HostImmich { get; init; }
         public List<SyncUserModel> SyncUserModels { get; init; } = [];
         public TimeSpan Timer { get; init; } = TimeSpan.FromMinutes(30);
+        public int CountChankUpload { get; init; } = 20;
     }
 
     public class SyncUserModel
