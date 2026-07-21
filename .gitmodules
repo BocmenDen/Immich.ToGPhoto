@@ -1,0 +1,3 @@
+[submodule "Immich.Client"]
+	path = Immich.Client
+	url = https://github.com/BocmenDen/Immich.Client

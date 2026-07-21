@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="__pycache__\**" />
+		<EmbeddedResource Remove="__pycache__\**" />
+		<None Remove="__pycache__\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.1.79" />
+		<PackageReference Include="System.Data.SQLite" Version="2.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="NSwag.MSBuild" Version="14.7.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<Target Name="NSwag" AfterTargets="PreBuildEvent" Condition="'$(DockerBuild)' != 'true'">
+		<Exec Command='$(NSwagExe) openapi2csclient /input:$(MSBuildProjectDirectory)\Server\openapi.json /classname:GPMCClient /namespace:GPMC /output:GPMCClient.cs /GenerateNullableReferenceTypes:true /GenerateOptionalPropertiesAsNullable:true /GenerateOptionalParameters:true' />
+	</Target>
+
+</Project>

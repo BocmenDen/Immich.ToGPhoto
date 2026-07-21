@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Immich.ToGPhoto.App": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

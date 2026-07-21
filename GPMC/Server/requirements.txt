@@ -1,0 +1,4 @@
+﻿gpmc
+pydantic
+fastapi
+uvicorn

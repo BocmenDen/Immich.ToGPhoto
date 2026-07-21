@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Элементы решения/">
+    <File Path="Dockerfile" />
+    <File Path="start.sh" />
+  </Folder>
+  <Project Path="GPMC/GPMC.csproj" />
+  <Project Path="Immich.Client/Immich.Client.csproj" />
+  <Project Path="Immich.ToGPhoto.App/Immich.ToGPhoto.App.csproj" />
+</Solution>
