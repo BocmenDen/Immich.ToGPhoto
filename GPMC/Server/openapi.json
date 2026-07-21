@@ -149,86 +149,6 @@
         ]
       }
     },
-    "/media_keys": {
-      "get": {
-        "tags": [
-          "GPMC"
-        ],
-        "summary": "Get Media Keys",
-        "operationId": "GetMediaKeys",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/MediaKeyResponse"
-                  },
-                  "type": "array",
-                  "title": "Response Getmediakeys"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "APIKeyHeader": []
-          }
-        ]
-      }
-    },
-    "/intersect": {
-      "post": {
-        "tags": [
-          "GPMC"
-        ],
-        "summary": "Intersect",
-        "operationId": "Intersect",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntersectRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/MediaKeyResponse"
-                  },
-                  "type": "array",
-                  "title": "Response Intersect"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "APIKeyHeader": []
-          }
-        ]
-      }
-    },
     "/health": {
       "get": {
         "tags": [
@@ -319,40 +239,16 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "IntersectRequest": {
-        "properties": {
-          "keys": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Keys"
-          }
-        },
-        "type": "object",
-        "required": [
-          "keys"
-        ],
-        "title": "IntersectRequest"
-      },
-      "MediaKeyResponse": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "title": "Key"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "title": "MediaKeyResponse"
-      },
       "UploadRequest": {
         "properties": {
           "path": {
             "type": "string",
             "title": "Path"
+          },
+          "threads": {
+            "type": "integer",
+            "title": "Threads",
+            "default": 3
           }
         },
         "type": "object",

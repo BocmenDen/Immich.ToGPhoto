@@ -78,7 +78,9 @@ namespace Immich.ToGPhoto.App
                     GPMCClient gpmcClient = GPMCClientBuilder.Build(appConfig.HostGPMC, userConfig.GPhotoKey);
 
                     SyncUser syncUser = new(immichClient, gpmcClient, await immichClient.GetUserName(), appConfig.CountChankUpload);
-                    _ = await gpmcClient.GetPathDB();
+                    _ = await gpmcClient.UpdateCacheAsync();
+                    var pathDB = await gpmcClient.GetDBPathAsync();
+                    logger.LogInformation("Успешно добавлен пользователь {name} бд gpmc: {path}", syncUser.Name, pathDB.Path);
                     result.Add(syncUser);
                 }
                 catch (Exception e)

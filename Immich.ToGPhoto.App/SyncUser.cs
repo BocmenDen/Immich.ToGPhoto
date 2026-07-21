@@ -2,6 +2,7 @@
 using Immich.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Immich.ToGPhoto.App
 {
@@ -16,10 +17,11 @@ namespace Immich.ToGPhoto.App
         private readonly ImmichClient _immichClient = null!;
         private readonly SyncDB _syncDB = null!;
         private readonly int _countChankUpload;
+        private readonly int _countThreadsGPMC;
 
         private SyncUser() { }
 
-        public SyncUser(ImmichClient immichClient, GPMCClient gpmcClient, string name, int countChankUpload = 20)
+        public SyncUser(ImmichClient immichClient, GPMCClient gpmcClient, string name, int countChankUpload = 20, int countThreadsGPMC = 3)
         {
             _gpmcClient = gpmcClient;
             _immichClient = immichClient;
@@ -27,6 +29,7 @@ namespace Immich.ToGPhoto.App
             _syncDB = new SyncDB(Key);
             Name = name;
             _countChankUpload = countChankUpload;
+            _countThreadsGPMC = countThreadsGPMC;
         }
 
         public async Task SyncNewPhotos(ILogger logger)
@@ -92,12 +95,12 @@ namespace Immich.ToGPhoto.App
         /// </summary>
         private async Task LoadPhotos(ILogger logger)
         {
-            var allAssetsImmich = _immichClient.SearchAllAssetsAsync(new MetadataSearchDto() { WithDeleted = false, WithStacked = true, Order = AssetOrder.Asc }).Select(x => x.Id);
+            var allAssetsImmich = _immichClient.SearchAllAssetsAsync(new MetadataSearchDto() { WithDeleted = false, WithStacked = true, Order = AssetOrder.Asc });
 
             await foreach (var itemImmichChank in allAssetsImmich.Chunk(CHANK_SIZE))
             {
                 // Те элементы которые вроде как загружены
-                var keysDBUploaded = await _syncDB.SyncItems.Where(x => itemImmichChank.Contains(x.ImmichKey)).ToListAsync();
+                var keysDBUploaded = await _syncDB.SyncItems.Where(x => itemImmichChank.Select(x => x.Id).Contains(x.ImmichKey)).ToListAsync();
                 // Те элементы которые в действительности загружены в Google Photos. (Синхронизация с Google Photos)
                 var toUpload = await _gpmcClient.Intersect(keysDBUploaded.Select(x => x.GoogleKey)).ToHashSetAsync();
                 // Те элементы которые были случайно удалены в гугл фото
@@ -107,7 +110,7 @@ namespace Immich.ToGPhoto.App
                 _syncDB.SyncItems.RemoveRange(toResetUpload);
                 await _syncDB.SaveChangesAsync();
                 // Обнаружение фото требующих загрузки в Google Photos.
-                var toNewUpload = itemImmichChank.Except(keysDBUploaded.Select(x => x.ImmichKey));
+                var toNewUpload = itemImmichChank.ExceptBy(keysDBUploaded.Select(x => x.ImmichKey), x => x.Id).OrderBy(x => x.ExifInfo?.DateTimeOriginal).Select(x => x.Id);
                 // Элементы которые в конечном итоге загружаем
                 var toFillUpload = toNewUpload.Concat(toResetUpload.Select(x => x.ImmichKey));
 
@@ -117,7 +120,7 @@ namespace Immich.ToGPhoto.App
 
                     logger.LogInformation("Успешно скачанно для загрузки {count} элементов", mapFilesKey.Count);
 
-                    var resultUpload = (await _gpmcClient.UploadFilesAsync(new UploadRequest() { Path = pathFilesUpload })).Files;
+                    var resultUpload = (await _gpmcClient.UploadFilesAsync(new UploadRequest() { Path = pathFilesUpload, Threads = _countThreadsGPMC })).Files;
 
                     logger.LogInformation("В Google Photo успешно загружено {count} элементов", resultUpload.Count);
 
@@ -148,7 +151,7 @@ namespace Immich.ToGPhoto.App
 
                 //   asset.IsEdited  Todo На будущее. Если фото было отредактировано, то нужно скачать оригинал и применить метаданные из ExifInfo. (Дата, GPS координаты). А со стороны GPhoto удалить и заново загрузить Ибо API редактирования нет
 
-                var fileResponse = await _immichClient.DownloadAssetAsync(id);
+                var fileResponse = await _immichClient.DownloadAssetAsync(id, edited: true);
 
 
                 var tempSubFolder = Path.GetFullPath(Path.Combine(
@@ -166,11 +169,44 @@ namespace Immich.ToGPhoto.App
 
                 file.Close();
 
+                try
+                {
+                    using var exiftool = new SharpExifTool.ExifTool();
+                    var tags = new Dictionary<string, string>();
+
+                    if (asset.ExifInfo?.DateTimeOriginal != null)
+                    {
+                        tags["DateTimeOriginal"] =
+                            asset.ExifInfo.DateTimeOriginal
+                                .Value
+                                .ToString("yyyy:MM:dd HH:mm:ss");
+                    }
+
+                    if (asset.ExifInfo?.Latitude != null)
+                    {
+                        tags["GPSLatitude"] =
+                            asset.ExifInfo.Latitude.Value.ToString(
+                                CultureInfo.InvariantCulture);
+                    }
+
+                    if (asset.ExifInfo?.Longitude != null)
+                    {
+                        tags["GPSLongitude"] =
+                            asset.ExifInfo.Longitude.Value.ToString(
+                                CultureInfo.InvariantCulture);
+                    }
+
+                    await exiftool.WriteTagsAsync(filePath, tags);
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(e, "Не удалось применить exiftool к фото {path}", filePath);
+                }
+
                 logger.LogInformation("Скачен новый элемент для загрузки {path}", filePath);
 
                 mapping[new(filePath)] = id;
             }
-
 
             return (uploadFolder, mapping);
         }

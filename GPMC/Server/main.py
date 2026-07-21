@@ -37,6 +37,7 @@ async def update_cache(auth_data: str = Security(auth_scheme)):
 
 class UploadRequest(BaseModel):
     path: str
+    threads: int = 3
 
 class UploadResponse(BaseModel):
     files: dict[str, str]
@@ -45,7 +46,7 @@ class UploadResponse(BaseModel):
 async def upload_files(request: UploadRequest, auth_data: str = Security(auth_scheme)):
     try:
         client = Client(auth_data=auth_data)
-        uploaded_files = client.upload(request.path, recursive=True)
+        uploaded_files = client.upload(request.path, recursive=True, show_progress=True, delete_from_host=True, threads=request.threads)
         return UploadResponse(files=uploaded_files)
     except Exception as e:
         raise HTTPException(status_code=530, detail=str(e))

@@ -7,6 +7,7 @@
         public List<SyncUserModel> SyncUserModels { get; init; } = [];
         public TimeSpan Timer { get; init; } = TimeSpan.FromMinutes(30);
         public int CountChankUpload { get; init; } = 20;
+        public int CountThreadsGPMC { get; init; } = 2;
     }
 
     public class SyncUserModel
