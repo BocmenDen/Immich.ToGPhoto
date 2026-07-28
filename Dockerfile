@@ -36,6 +36,4 @@ RUN pip3 install --break-system-packages --no-cache-dir -r ./python/requirements
 COPY start.sh .
 RUN chmod +x start.sh
 
-VOLUME /app/db /root/.gpmc
-
 ENTRYPOINT ["./start.sh"]

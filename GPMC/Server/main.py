@@ -1,4 +1,7 @@
-﻿from gpmc import Client
+﻿import mimetypes
+mimetypes.add_type('image/x-adobe-dng', '.dng')
+mimetypes.add_type('image/heic', '.heic')
+from gpmc import Client
 from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException, Header, Security
 from fastapi.security import APIKeyHeader
@@ -42,7 +45,7 @@ class UploadRequest(BaseModel):
 class UploadResponse(BaseModel):
     files: dict[str, str]
 
-@app.post("/upload_files", response_model=UploadResponse, operation_id="UploadFiles", tags=["GPMC"])
+@app.post("/upload_files", response_model=UploadResponse, operation_id="UploadFilesReturnMediaKeys", tags=["GPMC"])
 async def upload_files(request: UploadRequest, auth_data: str = Security(auth_scheme)):
     try:
         client = Client(auth_data=auth_data)
@@ -51,8 +54,9 @@ async def upload_files(request: UploadRequest, auth_data: str = Security(auth_sc
     except Exception as e:
         raise HTTPException(status_code=530, detail=str(e))
 
+
 class DeleteRequest(BaseModel):
-    files: list[str]
+    dedupKeys: list[str]
 
 class DeleteResponse(BaseModel):
     status: bool
@@ -61,8 +65,13 @@ class DeleteResponse(BaseModel):
 async def delete_files(request: DeleteRequest, auth_data: str = Security(auth_scheme)):
     try:
         client = Client(auth_data=auth_data)
-        client.api.move_remote_media_to_trash(request.files)
-        client.api.delete_remote_media_permanently(request.files)
+        items = request.dedupKeys
+        chunk_size = 200
+        while items:
+            chunk = items[:chunk_size]
+            client.api.move_remote_media_to_trash(chunk)
+            client.api.delete_remote_media_permanently(chunk)
+            items = items[chunk_size:]
         return DeleteResponse(status=True)
     except Exception as e:
         raise HTTPException(status_code=530, detail=str(e))

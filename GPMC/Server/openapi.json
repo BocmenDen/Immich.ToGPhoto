@@ -63,7 +63,7 @@
           "GPMC"
         ],
         "summary": "Upload Files",
-        "operationId": "UploadFiles",
+        "operationId": "UploadFilesReturnMediaKeys",
         "requestBody": {
           "content": {
             "application/json": {
@@ -199,17 +199,17 @@
       },
       "DeleteRequest": {
         "properties": {
-          "files": {
+          "dedupKeys": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Files"
+            "title": "Dedupkeys"
           }
         },
         "type": "object",
         "required": [
-          "files"
+          "dedupKeys"
         ],
         "title": "DeleteRequest"
       },

@@ -229,7 +229,7 @@ namespace GPMC
         /// </summary>
         /// <returns>Successful Response</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<UploadResponse> UploadFilesAsync(UploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<UploadResponse> UploadFilesReturnMediaKeysAsync(UploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -652,9 +652,9 @@ namespace GPMC
     public partial class DeleteRequest
     {
 
-        [Newtonsoft.Json.JsonProperty("files", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("dedupKeys", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<string> Files { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+        public System.Collections.Generic.ICollection<string> DedupKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
         private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
