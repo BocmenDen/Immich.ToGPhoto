@@ -46,6 +46,7 @@ namespace Immich.ToGPhoto.App
             }
 
             var users = await LoadUsers(config, loggerInit);
+            var restartWait = TimeSpan.FromSeconds(config.RestartWaitSecond);
 
             while (true)
             {
@@ -62,7 +63,7 @@ namespace Immich.ToGPhoto.App
                         loggerInit.LogWarning(e, "При выполнении организации объектов произошла ошибка");
                     }
                 }
-                await Task.Delay(config.Timer);
+                await Task.Delay(restartWait);
             }
         }
 

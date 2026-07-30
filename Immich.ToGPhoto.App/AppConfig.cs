@@ -5,7 +5,7 @@
         public required string HostGPMC { get; init; } = "http://localhost:2282";
         public required string HostImmich { get; init; }
         public List<SyncUserModel> SyncUserModels { get; init; } = [];
-        public TimeSpan Timer { get; init; } = TimeSpan.FromMinutes(5);
+        public int RestartWaitSecond { get; init; } = 5 * 60;
     }
 
     public class SyncUserModel
