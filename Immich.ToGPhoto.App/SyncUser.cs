@@ -97,7 +97,7 @@ namespace Immich.ToGPhoto.App
         {
             var allAssetsImmich = _immichClient.SearchAllAssetsAsync(new MetadataSearchDto() { WithDeleted = false, WithStacked = true, Order = AssetOrder.Asc });
 
-            await foreach (var itemImmichChank in allAssetsImmich.Chunk(CHANK_SIZE))
+            await foreach (var itemImmichChank in allAssetsImmich.Take(_config.TakeUpload).Chunk(CHANK_SIZE))
             {
                 // Те элементы которые вроде как загружены
                 var keysDBUploaded = await _syncDB.SyncItems.Where(x => itemImmichChank.Select(x => x.Id).Contains(x.ImmichKey)).ToListAsync();

@@ -19,5 +19,6 @@
         public int CountChankUpload { get; init; } = 30;
         public int CountThreadsGPMC { get; init; } = 1;
         public int CountThreadsImmich { get; init; } = 10;
+        public int TakeUpload { get; init; } = int.MaxValue;
     }
 }
