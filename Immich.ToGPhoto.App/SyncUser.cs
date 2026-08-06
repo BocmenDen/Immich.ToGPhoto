@@ -193,6 +193,7 @@ namespace Immich.ToGPhoto.App
 
                 var tempSubFolder = Path.GetFullPath(Path.Combine(
                     uploadFolder,
+                    "DCIM",
                     Guid.NewGuid().ToString()
                 ));
 
