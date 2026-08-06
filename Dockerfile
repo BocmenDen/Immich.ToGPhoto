@@ -31,7 +31,7 @@ COPY --from=build /publish ./dotnet
 COPY GPMC/Server ./python/
 RUN ls -la ./python
 RUN cat ./python/requirements.txt
-RUN pip3 install --break-system-packages --no-cache-dir -r ./python/requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple/ -r ./python/requirements.txt
 
 COPY start.sh .
 RUN chmod +x start.sh
