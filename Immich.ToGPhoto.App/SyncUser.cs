@@ -140,7 +140,7 @@ namespace Immich.ToGPhoto.App
 
                     uploadCount += resultUpload.Count;
 
-                    if (uploadCount >= _config.TakeUpload) break;
+                    if (uploadCount >= _config.TakeUpload) return;
                 }
             }
         }
