@@ -9,6 +9,7 @@ namespace GPMC
         {
             var rawData = (await client.UploadFilesReturnMediaKeysAsync(uploadRequest, cancellationToken)).Files.ToDictionary(x => x.Value, x => x.Key);
             Dictionary<Uri, string> result = [];
+            await client.UpdateCacheAsync(cancellationToken);
             await foreach (var (mediaKey, dedupKey) in ConvertToDedupKey(client, rawData.Keys))
             {
                 var path = rawData[mediaKey];
